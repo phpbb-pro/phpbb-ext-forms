@@ -1,0 +1,79 @@
+{% include 'overall_header.html' %}
+
+<h1>{{ lang('ACP_FORMS_MANAGE_TITLE') }}</h1>
+
+{% if ERRORS %}
+	<div class="errorbox">
+		<h3>{{ lang('WARNING') }}</h3>
+		<p>{{ ERRORS }}</p>
+	</div>
+{% endif %}
+
+<form id="senky_forms" method="post" action="{{ U_ACTION }}">
+	{% if PREVIEW %}
+		<fieldset>
+			<legend>{{ PREVIEW_SUBJECT }}</legend>
+			<div>{{ PREVIEW }}</div>
+		</fieldset>
+	{% endif %}
+
+	<fieldset>
+		<dl>
+			<dt><label for="form_name">{{ lang('FORM_NAME') ~ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="form_name" name="form_name" size="50" maxlength="255" value="{{ FORM_NAME }}" /></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="forum_id">{{ lang('FORM_FORUM') ~ lang('COLON') }}</label></dt>
+			<dd><select id="forum_id" name="forum_id">{{ S_FORUMS }}</select></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="form_subject">{{ lang('FORM_SUBJECT') ~ lang('COLON') }}</label><br><span>{{ lang('FORM_SUBJECT_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="form_subject" name="form_subject" size="50" maxlength="255" value="{{ FORM_SUBJECT }}" /></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="replace_posting">{{ lang('REPLACE_POSTING') ~ lang('COLON') }}</label></dt>
+			<dd>
+				<label><input type="radio" id="replace_posting" name="replace_posting" value="1" class="radio"{% if REPLACE_POSTING %} checked{% endif %} /> {{ lang('YES') }}</label>
+				<label><input type="radio" name="replace_posting" value="0" class="radio"{% if not REPLACE_POSTING %} checked{% endif %} /> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('FORM_INPUTS') }}</legend>
+		<div class="build-wrap"></div>
+		<input type="hidden" id="form_inputs" name="form_inputs" />
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('FORM_TEMPLATE') }}</legend>
+		<p>{{ lang('FORM_TEMPLATE_EXPLAIN') }}</p>
+		<textarea name="form_template" style="width: 100%; height: 200px;">{{ FORM_TEMPLATE }}</textarea>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+		<input class="button2" type="submit" name="preview" value="{{ lang('PREVIEW') }}" />
+		<input type="hidden" name="action" value="{% if FORM_ID %}edit{% else %}add{% endif %}" />
+		{% if FORM_ID %}
+			<input type="hidden" name="id" value="{{ FORM_ID }}" />
+		{% endif %}
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+
+	{% if FORM_ID %}
+		<fieldset class="submit-buttons" style="text-align: right;">
+			<input style="color: red; border-color: red;" class="button2" type="submit" name="delete" value="{{ lang('DELETE') }}" />
+		</fieldset>
+	{% endif %}
+</form>
+
+<script>
+	window.senky_forms_form_input = '{{ FORM_INPUTS | e('js') }}';
+</script>
+{% INCLUDEJS '@senky_forms/jquery-ui.min.js' %}
+{% INCLUDEJS '@senky_forms/form-builder.js' %}
+{% include 'overall_footer.html' %}

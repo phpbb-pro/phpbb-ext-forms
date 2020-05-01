@@ -1,0 +1,41 @@
+parameters:
+    tables.senky_forms: '%core.table_prefix%senky_forms'
+
+services:
+    senky.forms.controller:
+        class: senky\forms\controller\main
+        arguments:
+            - '@language'
+            - '@controller.helper'
+            - '@template'
+            - '@dbal.conn'
+            - '@request'
+            - '@user'
+            - '%tables.senky_forms%'
+            - '%tables.forums%'
+            - '%tables.posts%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    senky.forms.acp_listener:
+        class: senky\forms\event\acp_listener
+        arguments:
+            - '@dbal.conn'
+            - '%tables.senky_forms%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
+
+    senky.forms.listener:
+        class: senky\forms\event\main_listener
+        arguments:
+            - '@controller.helper'
+            - '@dbal.conn'
+            - '%tables.senky_forms%'
+        tags:
+            - { name: event.listener }
+
+    senky.forms.twig.extensions.phpbb:
+        class: senky\forms\twig\extensions\forms
+        tags:
+            - { name: twig.extension }

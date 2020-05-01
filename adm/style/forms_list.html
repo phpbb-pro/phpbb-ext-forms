@@ -1,0 +1,37 @@
+{% include 'overall_header.html' %}
+
+<h1>{{ lang('ACP_FORMS_MANAGE_TITLE') }}</h1>
+
+<table class="table1 zebra-table" id="down">
+	<thead>
+		<tr>
+			<th>{{ lang('FORM_NAME') }}</th>
+			<th>{{ lang('FORM_FORUM') }}</th>
+			<th>{{ lang('FORM_URL') }}</th>
+			<th>{{ lang('ACTIONS') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for form in forms %}
+			<tr>
+				<td><a href="{{ form.U_EDIT }}">{{ form.NAME }}</a></td>
+				<td>{{ form.FORUM }}</td>
+				<td><a href="{{ form.URL }}">{{ form.URL }}</a></td>
+				<td class="actions">
+					<a href="{{ form.U_EDIT }}">{{ ICON_EDIT }}</a>
+					<a href="{{ form.U_CLONE }}" title="{{ lang('CLONE_FORM') }}"><img src="images/file_new.gif" /></a>
+				</td>
+			</tr>
+		{% else %}
+			<tr class="row3">
+				<td colspan="3">{{ lang('NO_FORMS') }}</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<p style="text-align: right; margin-top: 10px;">
+	<a href="{{ U_ADD_FORM }}" class="button2">{{ lang('ADD_FORM') }}</a>
+</p>
+
+{% include 'overall_footer.html' %}

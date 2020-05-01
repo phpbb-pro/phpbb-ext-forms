@@ -1,0 +1,62 @@
+{% include 'overall_header.html' %}
+
+<h2>{{ FORUM_NAME }}</h2>
+
+<form id="senky_form" method="post" action="{{ U_ACTION }}">
+	{% if PREVIEW %}
+	<div class="post bg2">
+		<div class="inner">
+			<div class="postbody">
+				<h3>{{ PREVIEW_SUBJECT }}</h3>
+				<div class="content">{{ PREVIEW }}</div>
+			</div>
+		</div>
+	</div>
+	<hr />
+	{% endif %}
+
+	<div class="panel">
+		<div class="inner">
+			<h3>{{ FORM_NAME }}</h3>
+			{% if ERRORS %}
+				<p class="error">{{ ERRORS }}</p>
+			{% endif %}
+			<fieldset class="fields1">
+				{% for input in FORM_INPUTS %}
+					{% if input.type == 'paragraph' %}
+						<p>{{ input.label | unescape }}</p>
+					{% else %}
+						<dl class="senky-forms-{{ input.name }}">
+							<dt><label>{{ input.label | unescape }}</label>{% if input.explanation %}<br /><span>{{ input.explanation | unescape }}</span>{% endif %}</dt>
+							<dd>
+								{% if input.type == 'text' %}
+									<input type="{% if input.subtype %}{{ input.subtype }}{% else %}text{% endif %}" placeholder="{{ input.placeholder }}" name="{{ input.name }}" value="{{ input.value }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox autowidth" />
+								{% elseif input.type == 'select' %}
+									<select name="{{ input.name }}"{% if input.required %} required{% endif %}>
+										{% for option in input.values %}
+											<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+										{% endfor %}
+									</select>
+								{% else %}
+									<textarea name="{{ input.name }}" placeholder="{{ input.placeholder }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.rows %} rows="{{ input.rows }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox">{{ input.value }}</textarea>
+								{% endif %}
+							</dd>
+						</dl>
+					{% endif %}
+				{% endfor %}
+			</fieldset>
+		</div>
+	</div>
+
+	<div class="panel bg2">
+		<div class="inner">
+			<fieldset class="submit-buttons">
+				<input type="hidden" name="post_id" value="{{ POST_ID }}" />
+				<input type="submit" name="preview" value="{{ lang('PREVIEW') }}" class="button2" />
+				<input type="submit" name="submit" value="{{ lang('SUBMIT') }}" class="button1" />
+			</fieldset>
+		</div>
+	</div>
+</form>
+
+{% include 'overall_footer.html' %}

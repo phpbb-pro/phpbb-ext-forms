@@ -1,0 +1,6 @@
+{% if DISPLAY_FORM_NOTICE %}
+	<dl>
+		<dt><label>{{ lang('INFORMATION') ~ lang('COLON') }}</label></dt>
+		<dd><i class="fa fa-info-circle"></i> {{ lang('FORUM_FORM_INFO', U_FORM, FORM_NAME) }}</dd>
+	</dl>
+{% endif %}
