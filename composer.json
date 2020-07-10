@@ -1,7 +1,8 @@
 {
     "name": "senky/forms",
     "type": "phpbb-extension",
-    "description": "Allows to create forms to replace posting in certain forums.",
+    "description": "This extension allows you to create structured forms which can replace topic creation form in defined forums.",
+    "keywords": ["forms", "topic template", "template", "form", "structure"],
     "version": "1.0.0",
     "license": "Proprietary",
     "authors": [
@@ -15,6 +16,7 @@
         "composer/installers": "~1.0"
     },
     "extra": {
+        "licensee": "{{LICENSEE}}",
         "display-name": "Forms",
         "soft-require": {
             "phpbb/phpbb": ">=3.2.0"

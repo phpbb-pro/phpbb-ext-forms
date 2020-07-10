@@ -1,5 +1,3 @@
 senky_forms_controller:
     path: /form/{id}
     defaults: { _controller: senky.forms.controller:handle }
-    requirements:
-        id: '\d+'

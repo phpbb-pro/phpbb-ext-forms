@@ -15,7 +15,7 @@
 		{% for form in forms %}
 			<tr>
 				<td><a href="{{ form.U_EDIT }}">{{ form.NAME }}</a></td>
-				<td>{{ form.FORUM }}</td>
+				<td><a href="{{ form.FORUM_URL }}">{{ form.FORUM }}</a></td>
 				<td><a href="{{ form.URL }}">{{ form.URL }}</a></td>
 				<td class="actions">
 					<a href="{{ form.U_EDIT }}">{{ ICON_EDIT }}</a>

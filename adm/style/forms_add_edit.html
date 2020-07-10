@@ -1,5 +1,29 @@
 {% include 'overall_header.html' %}
 
+<style>
+.paragraph-field .subtype-wrap,
+.checkbox-group-field .toggle-wrap,
+.checkbox-group-field .other-wrap,
+.radio-group-field .other-wrap,
+.select-field .placeholder-wrap,
+.captcha-field .field-actions [type="edit"],
+.captcha-field .field-actions [type="copy"],
+.captcha-field .frm-holder {
+	display: none !important;
+}
+.icon-captcha:before {
+	font-family: 'FontAwesome';
+	content: '\f132';
+}
+</style>
+
+<script>
+	var form_name = 'senky_forms';
+	var text_name = 'form_template';
+	var load_draft = false;
+	var upload = false;
+</script>
+
 <h1>{{ lang('ACP_FORMS_MANAGE_TITLE') }}</h1>
 
 {% if ERRORS %}
@@ -34,12 +58,14 @@
 		</dl>
 
 		<dl>
-			<dt><label for="replace_posting">{{ lang('REPLACE_POSTING') ~ lang('COLON') }}</label></dt>
+			<dt><label for="replace_posting">{{ lang('REPLACE_POSTING') ~ lang('COLON') }}</label><br><span>{{ lang('REPLACE_POSTING_EXPLAIN') }}</span></dt>
 			<dd>
 				<label><input type="radio" id="replace_posting" name="replace_posting" value="1" class="radio"{% if REPLACE_POSTING %} checked{% endif %} /> {{ lang('YES') }}</label>
 				<label><input type="radio" name="replace_posting" value="0" class="radio"{% if not REPLACE_POSTING %} checked{% endif %} /> {{ lang('NO') }}</label>
 			</dd>
 		</dl>
+
+		{{ PERMALINK_HTML }}
 	</fieldset>
 
 	<fieldset>
@@ -51,7 +77,18 @@
 	<fieldset>
 		<legend>{{ lang('FORM_TEMPLATE') }}</legend>
 		<p>{{ lang('FORM_TEMPLATE_EXPLAIN') }}</p>
-		<textarea name="form_template" style="width: 100%; height: 200px;">{{ FORM_TEMPLATE }}</textarea>
+		{% include 'acp_posting_buttons.html' %}
+		<dl class="responsive-columns">
+			<dt style="width: 90px;" id="color_palette_placeholder" data-orientation="v" data-height="12" data-width="15" data-bbcode="true"></dt>
+			<dd style="margin-{{ S_CONTENT_FLOW_BEGIN }}: 90px;">
+				<textarea name="form_template" style="width: 100%; height: 200px;" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);" onfocus="initInsertions();" data-bbcode="true">{{ FORM_TEMPLATE }}</textarea>
+			</dd>
+			<dd style="margin-{{ S_CONTENT_FLOW_BEGIN }}: 90px; margin-top: 5px;">
+				<label><input type="checkbox" class="radio" name="disable_bbcode"{% if S_BBCODE_DISABLE_CHECKED %} checked="checked"{% endif %} /> {{ lang('DISABLE_BBCODE') }}</label>
+				<label><input type="checkbox" class="radio" name="disable_smilies"{% if S_SMILIES_DISABLE_CHECKED %} checked="checked"{% endif %} /> {{ lang('DISABLE_SMILIES') }}</label>
+				<label><input type="checkbox" class="radio" name="disable_magic_url"{% if S_MAGIC_URL_DISABLE_CHECKED %} checked="checked"{% endif %} /> {{ lang('DISABLE_MAGIC_URL') }}</label>
+			</dd>
+		</dl>
 	</fieldset>
 
 	<fieldset class="submit-buttons">
@@ -72,7 +109,66 @@
 </form>
 
 <script>
-	window.senky_forms_form_input = '{{ FORM_INPUTS | e('js') }}';
+	window.onload = function() {
+		$(function() {
+			// HTML decode paragraphs and descriptions
+			var inputs = JSON.parse('{{ FORM_INPUTS | e('js') }}');
+			for (var key in inputs)
+			{
+				if (inputs[key].type == 'paragraph') {
+					inputs[key].label = $('<textarea />').html(inputs[key].label).text();
+				} else if (inputs[key].type == 'text') {
+					inputs[key].description = $('<textarea />').html(inputs[key].description).text();
+				}
+			}
+			inputs = JSON.stringify(inputs);
+			
+			var formBuilderTypes = JSON.parse('{{ FORM_BUILDER_TYPES | e('js') }}');
+			var formBuilder = $('.build-wrap').formBuilder({
+				disabledAttrs: ['access', 'className'],
+				disableFields: [
+					'autocomplete',
+					'button',
+					'captcha',
+					'checkbox-group',
+					'date',
+					'file',
+					'header',
+					'hidden',
+					'number',
+					'paragraph',
+					'radio-group',
+					'select',
+					'text',
+					'textarea'
+				].filter(function(type) {return formBuilderTypes.indexOf(type) < 0}),
+				disableHTMLLabels: true,
+				editOnAdd: true,
+				fieldRemoveWarn: true,
+				formData: inputs,
+				showActionButtons: false,
+				disabledSubtypes: {
+					text: ['password'],
+					textarea: ['tinymce', 'quill'],
+					paragraph: ['address', 'blockquote', 'canvas', 'output'],
+				},
+				subtypes: {
+					text: ['number', 'date', 'datetime', 'time', 'url']
+				},
+			});
+
+			// don't submit form when user hits Enter in paragraph input
+			$(document).on('keydown', '.paragraph-field input', function(e) {
+				if (e.keyCode === 13) {
+					e.preventDefault();
+				}
+			});
+
+			$('#senky_forms').on('submit', function(e) {
+				$('#form_inputs').val(JSON.stringify(formBuilder.actions.getData()));
+			});
+		});
+	}
 </script>
 {% INCLUDEJS '@senky_forms/jquery-ui.min.js' %}
 {% INCLUDEJS '@senky_forms/form-builder.js' %}

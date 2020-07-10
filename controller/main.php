@@ -3,7 +3,7 @@
  *
  * Forms. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2018, Jakub Senko
+ * @copyright (c) 2020, Jakub Senko
  *
  */
 
@@ -17,12 +17,14 @@ class main
 	protected $db;
 	protected $request;
 	protected $user;
+	protected $controls;
+	protected $config;
 	protected $forms_table;
 	protected $forums_table;
 	protected $posts_table;
 	protected $root_path;
 	protected $php_ext;
-	public function __construct(\phpbb\language\language $language, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\user $user, $forms_table, $forums_table, $posts_table, $root_path, $php_ext)
+	public function __construct(\phpbb\language\language $language, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\user $user, \senky\forms\controls\manager $controls, \phpbb\config\config $config, $forms_table, $forums_table, $posts_table, $root_path, $php_ext)
 	{
 		$this->language = $language;
 		$this->helper = $helper;
@@ -30,6 +32,8 @@ class main
 		$this->db = $db;
 		$this->request = $request;
 		$this->user = $user;
+		$this->controls = $controls;
+		$this->config = $config;
 		$this->forms_table = $forms_table;
 		$this->forums_table = $forums_table;
 		$this->posts_table = $posts_table;
@@ -47,28 +51,44 @@ class main
 			return $this->helper->error('NO_FORM', 404);
 		}
 
-		$sql_ary = [
-			'SELECT'	=> 'sf.*, f.forum_name',
-			'FROM'		=> [$this->forms_table => 'sf'],
-			'LEFT_JOIN'	=> [
-				[
-					'FROM'	=> [$this->forums_table => 'f'],
-					'ON'	=> 'f.forum_id = sf.forum_id',
-				]
-			],
-			'WHERE'	=> 'sf.form_id = ' . (int) $id,
-		];
+		add_form_key('senky/forms/form');
 
-		if ($post_id)
+		$keys = ["sf.form_id = " . (int) $id];
+		if (class_exists('\senky\forms\permalink'))
 		{
-			$sql_ary['SELECT'] .= ', p.topic_id, p.senky_form_values';
-			$sql_ary['FROM'] += [$this->posts_table => 'p'];
-			$sql_ary['WHERE'] .= ' AND p.post_id = ' . (int) $post_id;
+			$permalink = new \senky\forms\permalink;
+			$keys = $permalink->find_by_permalink($keys, $id);
 		}
+		foreach($keys as $condition)
+		{
+			$sql_ary = [
+				'SELECT'	=> 'sf.*, f.forum_name',
+				'FROM'		=> [$this->forms_table => 'sf'],
+				'LEFT_JOIN'	=> [
+					[
+						'FROM'	=> [$this->forums_table => 'f'],
+						'ON'	=> 'f.forum_id = sf.forum_id',
+					]
+				],
+				'WHERE'	=> $condition,
+			];
+	
+			if ($post_id)
+			{
+				$sql_ary['SELECT'] .= ', p.topic_id, p.senky_form_values';
+				$sql_ary['FROM'] += [$this->posts_table => 'p'];
+				$sql_ary['WHERE'] .= ' AND p.post_id = ' . (int) $post_id;
+			}
+	
+			$result = $this->db->sql_query_limit($this->db->sql_build_query('SELECT', $sql_ary), 1);
+			$row = $this->db->sql_fetchrow($result);
+			$this->db->sql_freeresult($result);
 
-		$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $sql_ary));
-		$row = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+			if ($row !== false)
+			{
+				break;
+			}
+		}
 
 		if ($row === false)
 		{
@@ -93,17 +113,25 @@ class main
 
 			foreach ($form_inputs as $key => $input)
 			{
-				$form_inputs[$key]['value'] = $form_values[$input['name']];
+				$form_inputs[$key] = $this->controls->set_value($input, $form_values[$input['name']]);
 			}
 		}
 
 		$preview = $this->request->is_set_post('preview');
 		$submit = $this->request->is_set_post('submit');
 
+		$this->controls->init_render($form_inputs);
+
 		// collect data
 		$errors = [];
 		if ($preview || $submit)
 		{
+			// make sure the form key is valid
+			if (!check_form_key('senky/forms/form'))
+			{
+				$errors[] = $this->language->lang('FORM_INVALID');
+			}
+
 			foreach ($form_inputs as $key => $input)
 			{
 				// skip paragraphs
@@ -112,10 +140,10 @@ class main
 					continue;
 				}
 
-				$val = $this->request->variable($input['name'], '', true);
-				$form_inputs[$key]['value'] = $val;
+				$val = $this->request->variable($input['name'], $this->controls->get_default_value($input), true);
+				$form_inputs[$key] = $this->controls->set_value($input, $val);
 				
-				$valid = $this->is_valid_value($input, $val);
+				$valid = $this->controls->is_valid_value($input, $val);
 				if ($valid !== true)
 				{
 					$errors[] = $valid;
@@ -129,14 +157,17 @@ class main
 					include($this->root_path . 'includes/message_parser.' . $this->php_ext);
 				}
 				$message_parser = new \parse_message();
-				$message_parser->message = $this->generate_template($row['form_template'], $form_inputs);
-				$message_parser->parse(true, true, true, true, false, true, true);
+				// only parse BBcodes from admin
+				$message_parser->message = $row['form_template'];
+				$message_parser->parse($row['allow_bbcode'], $row['allow_urls'], $row['allow_smilies'], true, false, true, true);
+				// then replace with user input, but do not parse it again, it will be displayed as plain text
+				$message_parser->message = $this->generate_template($message_parser->message, $form_inputs);
 
 				if ($preview)
 				{
 					$this->template->assign_vars([
 						'PREVIEW_SUBJECT'	=> $this->generate_template($row['form_subject'], $form_inputs),
-						'PREVIEW'			=> $message_parser->format_display(true, true, true, false),
+						'PREVIEW'			=> $message_parser->format_display($row['allow_bbcode'], $row['allow_urls'], $row['allow_smilies'], false),
 					]);
 				}
 				else
@@ -150,7 +181,7 @@ class main
 					$form_values = [];
 					foreach ($form_inputs as $input)
 					{
-						$form_values[$input['name']] = $input['value'];
+						$form_values[$input['name']] = $this->controls->get_value($input);
 					}
 
 					$poll_data = [];
@@ -190,82 +221,24 @@ class main
 					];
 					$redirect_url = \submit_post($post_id ? 'edit' : 'post', $data['topic_title'], $this->user->data['username'], POST_NORMAL, $poll_data, $data, true);
 
+					$this->controls->after_submit_post($form_inputs);
+
 					redirect($redirect_url);
-				}
-			}
-
-			// fix selectbox selected property
-			foreach ($form_inputs as $key => $input)
-			{
-				if ($input['type'] != 'select')
-				{
-					continue;
-				}
-
-				foreach ($input['values'] as $vkey => $value)
-				{
-					$form_inputs[$key]['values'][$vkey]['selected'] = $value['value'] == $input['value'];
 				}
 			}
 		}
 
 		$this->template->assign_vars([
-			'U_ACTION'		=> $this->helper->route('senky_forms_controller', ['id' => $row['form_id']]),
-			'FORUM_NAME'	=> $row['forum_name'],
-			'FORM_NAME'		=> $row['form_name'],
-			'FORM_INPUTS'	=> $form_inputs,
-			'POST_ID'		=> $post_id,
-			'ERRORS'		=> implode('<br>', $errors),
+			'U_ACTION'				=> $this->helper->route('senky_forms_controller', ['id' => $row['form_id']]),
+			'FORUM_NAME'			=> $row['forum_name'],
+			'FORM_NAME'				=> $row['form_name'],
+			'FORM_INPUTS'			=> $form_inputs,
+			'POST_ID'					=> $post_id,
+			'ERRORS'					=> implode('<br>', $errors),
+			'S_HIDDEN_FIELDS'	=> build_hidden_fields($this->controls->build_hidden_fields($form_inputs)),
 		]);
 		
 		return $this->helper->render('form.html', $row['form_name']);
-	}
-
-	protected function is_valid_value($input, $value)
-	{
-		if (!empty($input['required']) && empty($value))
-		{
-			return $this->language->lang('INPUT_REQUIRED', $input['label']);
-		}
-
-		if (!empty($input['maxlength']) && utf8_strlen($value) > $input['maxlength'])
-		{
-			return $this->language->lang('INPUT_TOO_LONG', $input['label'], $input['maxlength']);
-		}
-
-		if ($input['type'] == 'select' && !in_array($value, array_column($input['values'], 'value')))
-		{
-			return $this->language->lang('SELECT_VALUE_INVALID', $input['label']);
-		}
-
-		if (!empty($input['subtype']))
-		{
-			switch ($input['subtype'])
-			{
-				case 'email':
-					if (!empty($value) && !filter_var($value, FILTER_VALIDATE_EMAIL))
-					{
-						return $this->language->lang('EMAIL_INVALID', $input['label']);
-					}
-				break;
-
-				case 'number':
-					if (!empty($value) && !filter_var($value, FILTER_VALIDATE_INT))
-					{
-						return $this->language->lang('NUMBER_INVALID', $input['label']);
-					}
-				break;
-
-				case 'url':
-					if (!empty($value) && !filter_var($value, FILTER_VALIDATE_URL))
-					{
-						return $this->language->lang('URL_INVALID', $input['label']);
-					}
-				break;
-			}
-		}
-
-		return true;
 	}
 
 	protected function generate_template($template, $inputs)
@@ -278,20 +251,8 @@ class main
 				continue;
 			}
 
-			$template = str_replace('{' . $input['name'] . '}', $input['value'], $template);
+			$template = str_replace('{' . $input['name'] . '}', $this->controls->get_value_for_template($input), $template);
 		}
 		return $template;
-	}
-
-	protected function get_subject($inputs, $form_name)
-	{
-		foreach ($inputs as $input)
-		{
-			if (!empty($input['subject']))
-			{
-				return $input['value'];
-			}
-		}
-		return $form_name;
 	}
 }

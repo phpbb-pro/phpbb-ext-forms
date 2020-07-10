@@ -1,0 +1,47 @@
+imports:
+    - { resource: controls_extended.yml, ignore_errors: true }
+
+services:
+    senky.forms.controls.manager:
+        class: senky\forms\controls\manager
+        arguments:
+            - '@language'
+            - '@senky.forms.controls.type_collection'
+
+    senky.forms.controls.type.base:
+        class: senky\forms\controls\type\base
+        abstract: true
+        arguments:
+            - '@language'
+
+# ----- Form controls -----
+    senky.forms.controls.type_collection:
+        class: phpbb\di\service_collection
+        arguments:
+            - '@service_container'
+        tags:
+            - { name: service_collection, tag: senky.forms.controls.type }
+
+    senky.forms.controls.type.paragraph:
+        class: senky\forms\controls\type\paragraph
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }
+
+    senky.forms.controls.type.select:
+        class: senky\forms\controls\type\select
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }
+
+    senky.forms.controls.type.text:
+        class: senky\forms\controls\type\text
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }
+
+    senky.forms.controls.type.textarea:
+        class: senky\forms\controls\type\textarea
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }

@@ -22,10 +22,12 @@ class main_module
 	protected $template;
 	protected $db;
 	protected $helper;
+	protected $controls;
 	protected $forms_table;
 	protected $forums_table;
 	protected $root_path;
 	protected $php_ext;
+	private $permalink;
 	public function __construct()
 	{
 		global $phpbb_container;
@@ -35,14 +37,21 @@ class main_module
 		$this->template = $phpbb_container->get('template');
 		$this->db = $phpbb_container->get('dbal.conn');
 		$this->helper = $phpbb_container->get('controller.helper');
+		$this->controls = $phpbb_container->get('senky.forms.controls.manager');
 		$this->forms_table = $phpbb_container->getParameter('tables.senky_forms');
 		$this->forums_table = $phpbb_container->getParameter('tables.forums');
 		$this->root_path = $phpbb_container->getParameter('core.root_path');
 		$this->php_ext = $phpbb_container->getParameter('core.php_ext');
+
+		if (class_exists('\senky\forms\permalink'))
+		{
+			$this->permalink = new \senky\forms\permalink;
+		}
 	}
 
 	public function main($id, $mode)
 	{
+		$this->language->add_lang('posting');
 		$this->language->add_lang('acp', 'senky/forms');
 		$this->page_title = $this->language->lang('ACP_FORMS_MANAGE_TITLE');
 		add_form_key('senky/forms');
@@ -107,8 +116,12 @@ class main_module
 						'forum_id'			=> 0,
 						'form_subject'		=> '',
 						'replace_posting'	=> 0,
+						'form_permalink'	=> '',
 						'form_inputs'		=> '',
 						'form_template'		=> '',
+						'allow_bbcode'	=> 1,
+						'allow_smilies'	=> 1,
+						'allow_urls'	=> 1,
 					];
 				}
 
@@ -159,6 +172,12 @@ class main_module
 						$errors[] = 'FORM_SUBJECT_TOO_LONG';
 					}
 
+					if ($this->permalink)
+					{
+						$row['form_permalink'] = $this->request->variable('form_permalink', '', true);
+						$errors = array_merge($errors, $this->permalink->check_errors($row, $form_id));
+					}
+
 					$row['form_inputs'] = $this->request->variable('form_inputs', '', true);
 					if (empty($row['form_inputs']) || $row['form_inputs'] === '[]')
 					{
@@ -167,6 +186,9 @@ class main_module
 
 					$row['replace_posting'] = $this->request->variable('replace_posting', 0);
 					$row['form_template'] = $this->request->variable('form_template', '', true);
+					$row['allow_bbcode'] = !$this->request->variable('disable_bbcode', false);
+					$row['allow_smilies'] = !$this->request->variable('disable_smilies', false);
+					$row['allow_urls'] = !$this->request->variable('disable_magic_url', false);
 
 					if (empty($errors))
 					{
@@ -176,9 +198,13 @@ class main_module
 								'form_name'			=> $row['form_name'],
 								'forum_id'			=> (int) $row['forum_id'],
 								'replace_posting'	=> (int) $row['replace_posting'],
+								'form_permalink'	=> $row['form_permalink'],
 								'form_inputs'		=> $row['form_inputs'],
 								'form_template'		=> $row['form_template'],
 								'form_subject'		=> $row['form_subject'],
+								'allow_bbcode'		=> $row['allow_bbcode'],
+								'allow_smilies'		=> $row['allow_smilies'],
+								'allow_urls'		=> $row['allow_urls'],
 							];
 	
 							$sql = 'INSERT INTO ' . $this->forms_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
@@ -200,10 +226,10 @@ class main_module
 							}
 							$message_parser = new \parse_message();
 							$message_parser->message = $row['form_template'];
-							$message_parser->parse(true, true, true, true, false, true, true);
+							$message_parser->parse($row['allow_bbcode'], $row['allow_urls'], $row['allow_smilies'], true, false, true, true);
 							$this->template->assign_vars([
 								'PREVIEW_SUBJECT'	=> $row['form_subject'],
-								'PREVIEW'			=> $message_parser->format_display(true, true, true, false)
+								'PREVIEW'			=> $message_parser->format_display($row['allow_bbcode'], $row['allow_urls'], $row['allow_smilies'], false)
 							]);
 						}
 					}
@@ -221,9 +247,15 @@ class main_module
 					'FORUM_ID'			=> $row['forum_id'],
 					'FORM_NAME'			=> $row['form_name'],
 					'FORM_SUBJECT'		=> $row['form_subject'],
+					'FORM_PERMALINK'		=> $row['form_permalink'],
+					'PERMALINK_HTML'	=> !empty($this->permalink) ? $this->permalink->get_acp_html($row) : '',
 					'FORM_INPUTS'		=> $inputs ?: '[]',
 					'FORM_TEMPLATE'		=> $row['form_template'],
 					'REPLACE_POSTING'	=> $row['replace_posting'],
+					'FORM_BUILDER_TYPES'	=> json_encode($this->controls->get_types()),
+					'S_BBCODE_DISABLE_CHECKED'	=> !$row['allow_bbcode'],
+					'S_SMILIES_DISABLE_CHECKED'	=> !$row['allow_smilies'],
+					'S_MAGIC_URL_DISABLE_CHECKED'	=> !$row['allow_urls'],
 				]);
 
 				$this->tpl_name = 'forms_add_edit';
@@ -232,7 +264,7 @@ class main_module
 
 			default:
 
-				$sql = 'SELECT sf.form_id, f.forum_name, sf.form_name
+				$sql = 'SELECT sf.form_id, f.forum_id, f.forum_name, sf.form_name, sf.form_permalink
 					FROM ' . $this->forms_table . ' sf
 					LEFT JOIN ' . $this->forums_table . ' f
 						ON (f.forum_id = sf.forum_id)';
@@ -242,7 +274,8 @@ class main_module
 					$this->template->assign_block_vars('forms', [
 						'NAME'		=> $row['form_name'],
 						'FORUM'		=> $row['forum_name'],
-						'URL'		=> $this->helper->route('senky_forms_controller', ['id' => $row['form_id']], false, '', UrlGeneratorInterface::ABSOLUTE_URL),
+						'FORUM_URL'	=> append_sid(generate_board_url() . '/viewforum.php?f=' . $row['forum_id']),
+						'URL'		=> $this->helper->route('senky_forms_controller', ['id' => !empty($this->permalink) ? $this->permalink->get_permalink($row) : $row['form_id']], false, '', UrlGeneratorInterface::ABSOLUTE_URL),
 						'U_EDIT'	=> $this->u_action . '&action=edit&id=' . $row['form_id'],
 						'U_CLONE'	=> $this->u_action . '&action=clone&id=' . $row['form_id'],
 					]);

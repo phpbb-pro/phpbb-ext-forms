@@ -35,7 +35,7 @@ class main_listener implements EventSubscriberInterface
 	{
 		if ($event['is_authed'] && ($event['mode'] === 'post' || ($event['mode'] == 'edit' && $event['post_data']['topic_first_post_id'] == $event['post_id'])))
 		{
-			$sql = 'SELECT form_id, replace_posting
+			$sql = 'SELECT form_id, replace_posting, form_permalink
 				FROM ' . $this->forms_table . '
 				WHERE forum_id = ' . (int) $event['forum_id'];
 			$result = $this->db->sql_query($sql);
@@ -44,8 +44,13 @@ class main_listener implements EventSubscriberInterface
 
 			if ($row && $row['replace_posting'])
 			{
+				if (class_exists('\senky\forms\permalink'))
+				{
+					$permalink = new \senky\forms\permalink;
+				}
+
 				redirect($this->helper->route('senky_forms_controller', [
-					'id' 		=> $row['form_id'],
+					'id' 		=> !empty($this->permalink) ? $this->permalink->get_permalink($row) : $row['form_id'],
 					'post_id'	=> $event['post_id'],
 				]));
 			}

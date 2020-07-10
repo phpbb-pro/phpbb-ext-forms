@@ -1,0 +1,22 @@
+services:
+    senky.forms.controls.type.captcha:
+        class: senky\forms\controls\type\captcha
+        parent: senky.forms.controls.type.base
+        arguments:
+            - '@captcha.factory'
+            - '@config'
+            - '@template'
+        tags:
+            - { name: senky.forms.controls.type }
+
+    senky.forms.controls.type.checkbox:
+        class: senky\forms\controls\type\checkbox
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }
+
+    senky.forms.controls.type.radio:
+        class: senky\forms\controls\type\radio
+        parent: senky.forms.controls.type.base
+        tags:
+            - { name: senky.forms.controls.type }
