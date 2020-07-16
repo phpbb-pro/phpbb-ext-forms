@@ -3,7 +3,7 @@
  *
  * Forms. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2018, Jakub Senko
+ * @copyright (c) 2020, Jakub Senko
  *
  */
 
@@ -31,9 +31,11 @@ $lang = array_merge($lang, array(
 	'FORM_SUBJECT'			=> 'Form subject',
 	'FORM_SUBJECT_EXPLAIN'	=> 'New topic will have this subject. You can use placeholders just like in Form template. Keep in mind that the final maximum allowed length is 120 characters.',
 	'REPLACE_POSTING'		=> 'Replace posting page',
-	'REPLACE_POSTING_EXPLAIN'	=> 'If set to Yes, users will be forced to use this form to post in the forum. If set to No, the form will be only available at the form link - posting page will remain the same.',
+	'REPLACE_POSTING_EXPLAIN'	=> 'If set to Yes, users will be forced to use this form to post in the forum. Forum permissions will be honored. If set to No, the form will be only available at the form link - posting page will remain the same. Forum permissions will be ignored - all members can submit the form.',
 	'FORM_PERMALINK'		=> 'Form link',
 	'FORM_PERMALINK_EXPLAIN'	=> 'You can type in the nice URL for this form to give it more credibility. The link cannot start with a number. Leave empty to use auto-generated ID.',
+	'ALLOWED_GROUPS'	=> 'Who can submit the form',
+	'ALLOWED_GROUPS_EXPLAIN'	=> 'Select which groups can see and submit the form. This extends the forum permissions if <em>Replace posting page</em> is set to Yes (meaning user must have adequate permissions plus be member of at least one of the selected groups). Make sure to select at least one, otherwise no one will be able to submit it. Yes, even guests can be allowed (do not forget to add CAPTCHA input below in that case).',
 	'FORM_INPUTS'			=> 'Form inputs',
 	'FORM_TEMPLATE'			=> 'Form template',
 	'FORM_TEMPLATE_EXPLAIN'	=> 'Use {INPUT_NAME} where INPUT_NAME is Name of the input to replace it with the value user submitted.',

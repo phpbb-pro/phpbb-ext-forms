@@ -1,4 +1,7 @@
 For standard license, remove:
 
 config/controls_extended.yml
-permalink.php
+controls/type/captcha.php
+controls/type/checkbox.php
+controls/type/radio.php
+extended.php

@@ -19,12 +19,14 @@ class main
 	protected $user;
 	protected $controls;
 	protected $config;
+	protected $auth;
 	protected $forms_table;
 	protected $forums_table;
 	protected $posts_table;
 	protected $root_path;
 	protected $php_ext;
-	public function __construct(\phpbb\language\language $language, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\user $user, \senky\forms\controls\manager $controls, \phpbb\config\config $config, $forms_table, $forums_table, $posts_table, $root_path, $php_ext)
+	private $extended;
+	public function __construct(\phpbb\language\language $language, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\db\driver\driver_interface $db, \phpbb\request\request $request, \phpbb\user $user, \senky\forms\controls\manager $controls, \phpbb\config\config $config, \phpbb\auth\auth $auth, $forms_table, $forums_table, $posts_table, $root_path, $php_ext)
 	{
 		$this->language = $language;
 		$this->helper = $helper;
@@ -34,30 +36,33 @@ class main
 		$this->user = $user;
 		$this->controls = $controls;
 		$this->config = $config;
+		$this->auth = $auth;
 		$this->forms_table = $forms_table;
 		$this->forums_table = $forums_table;
 		$this->posts_table = $posts_table;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
+
+		if (class_exists('\senky\forms\extended'))
+		{
+			$this->extended = new \senky\forms\extended;
+		} 
 	}
 
 	public function handle($id)
 	{
 		$post_id = $this->request->variable('post_id', 0);
 
+		$this->language->add_lang('mcp');
+		$this->language->add_lang('posting');
 		$this->language->add_lang('form', 'senky/forms');
-		if (!$this->user->data['is_registered'] || $this->user->data['is_bot'])
-		{
-			return $this->helper->error('NO_FORM', 404);
-		}
 
 		add_form_key('senky/forms/form');
 
 		$keys = ["sf.form_id = " . (int) $id];
-		if (class_exists('\senky\forms\permalink'))
+		if (!empty($this->extended))
 		{
-			$permalink = new \senky\forms\permalink;
-			$keys = $permalink->find_by_permalink($keys, $id);
+			$keys = $this->extended->find_by_permalink($keys, $id);
 		}
 		foreach($keys as $condition)
 		{
@@ -93,6 +98,48 @@ class main
 		if ($row === false)
 		{
 			return $this->helper->error('NO_FORM', 404);
+		}
+
+		if (!empty($this->extended))
+		{
+			// only allow form to selected groups
+			if (!$this->extended->check_groups($row))
+			{
+				return $this->helper->error('NO_FORM', 404);
+			}
+		}
+		else
+		{
+			// allow to every registered user
+			if (!$this->user->data['is_registered'] || $this->user->data['is_bot'])
+			{
+				return $this->helper->error('NO_FORM', 404);
+			}
+		}
+		
+
+		// check for permissions only if posting page is replaced
+		if ($row['replace_posting'])
+		{
+			if (!$this->auth->acl_get('f_read', $row['forum_id']))
+			{
+				return $this->helper->error('SORRY_AUTH_READ', 401);
+			}
+	
+			if (!$post_id)
+			{
+				if (!$this->auth->acl_get('f_post', $row['forum_id']))
+				{
+					return $this->helper->error('USER_CANNOT_POST', 401);
+				}
+			}
+			else
+			{
+				if (!$this->auth->acl_gets('f_edit', 'm_edit', $row['forum_id']))
+				{
+					return $this->helper->error('USER_CANNOT_EDIT', 401);
+				}
+			}
 		}
 
 		// decode form inputs

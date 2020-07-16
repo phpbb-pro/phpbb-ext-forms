@@ -16,6 +16,7 @@ services:
             - '@user'
             - '@senky.forms.controls.manager'
             - '@config'
+            - '@auth'
             - '%tables.senky_forms%'
             - '%tables.forums%'
             - '%tables.posts%'

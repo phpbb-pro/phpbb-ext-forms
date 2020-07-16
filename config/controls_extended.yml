@@ -6,6 +6,7 @@ services:
             - '@captcha.factory'
             - '@config'
             - '@template'
+            - '@request'
         tags:
             - { name: senky.forms.controls.type }
 

@@ -3,7 +3,7 @@
  *
  * Forms. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2018, Jakub Senko
+ * @copyright (c) 2020, Jakub Senko
  *
  */
 
@@ -44,13 +44,13 @@ class main_listener implements EventSubscriberInterface
 
 			if ($row && $row['replace_posting'])
 			{
-				if (class_exists('\senky\forms\permalink'))
+				if (class_exists('\senky\forms\extended'))
 				{
-					$permalink = new \senky\forms\permalink;
+					$extended = new \senky\forms\extended;
 				}
 
 				redirect($this->helper->route('senky_forms_controller', [
-					'id' 		=> !empty($this->permalink) ? $this->permalink->get_permalink($row) : $row['form_id'],
+					'id' 		=> !empty($extended) ? $extended->get_permalink($row) : $row['form_id'],
 					'post_id'	=> $event['post_id'],
 				]));
 			}

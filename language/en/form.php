@@ -3,7 +3,7 @@
  *
  * Forms. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2018, Jakub Senko
+ * @copyright (c) 2020, Jakub Senko
  *
  */
 

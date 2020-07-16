@@ -65,7 +65,32 @@
 			</dd>
 		</dl>
 
-		{{ PERMALINK_HTML }}
+		<dl>
+			<dt><label for="form_permalink">{{ lang('FORM_PERMALINK') ~ lang('COLON') }}</label><br><span>{{ lang('FORM_PERMALINK_EXPLAIN') }}</span></dt>
+			<dd>
+				{% if not S_IS_EXTENDED %}<span style="opacity: 0.5">{% endif %}
+					{{ FORM_PERMALINK_PREFIX }}<input type="text" id="form_permalink" name="form_permalink" size="20" maxlength="255" value="{{ FORM_PERMALINK }}" {% if not S_IS_EXTENDED %}disabled style="cursor: not-allowed"{% endif %} />
+				{% if not S_IS_EXTENDED %}
+					</span><br>
+					<i class="fa fa-info-circle"></i> This feature is available in Extended license. <a href="">Upgrade now</a>
+				{% endif %}
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="allowed_groups">{{ lang('ALLOWED_GROUPS') ~ lang('COLON') }}</label><br><span>{{ lang('ALLOWED_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="allowed_groups" name="allowed_groups[]" multiple size="6"{% if not S_IS_EXTENDED %} disabled style="opacity: 0.5; cursor: not-allowed"{% endif %}>
+					{% for group in GROUPS %}
+						<option value="{{ group.group_id }}"{% if group.selected %} selected{% endif %}>{{ group.group_name }}</option>
+					{% endfor %}
+				</select>
+				{% if not S_IS_EXTENDED %}
+					</span><br>
+					<i class="fa fa-info-circle"></i> This feature is available in Extended license. <a href="">Upgrade now</a>
+				{% endif %}
+			</dd>
+		</dl>
 	</fieldset>
 
 	<fieldset>
@@ -122,6 +147,12 @@
 				}
 			}
 			inputs = JSON.stringify(inputs);
+
+			{% if not S_IS_EXTENDED %}
+				$(document).on('loaded', function() {
+					$('.cb-wrap').after('<div class="cb-wrap pull-right"><br><br><i class="fa fa-info-circle"></i> Inputs below are available in Extended license. <a href="">Upgrade now</a><br><br><ul class="frmb-control" style="opacity: 0.5"><li class="icon-checkbox-group input-control" style="cursor: not-allowed"><span>Checkbox Group</span></li><li class="icon-radio-group input-control" style="cursor: not-allowed"><span>Radio Group</span></li><li class="icon-captcha input-control" style="cursor: not-allowed"><span>CAPTCHA</span></li></ul></div>');
+				});
+			{% endif %}
 			
 			var formBuilderTypes = JSON.parse('{{ FORM_BUILDER_TYPES | e('js') }}');
 			var formBuilder = $('.build-wrap').formBuilder({
@@ -155,6 +186,17 @@
 				subtypes: {
 					text: ['number', 'date', 'datetime', 'time', 'url']
 				},
+				typeUserEvents: {
+					// allow only one CAPTCHA in the form - hide control once it is added and display it again once it is removed
+					captcha: {
+						onadd: function() {
+							$('li.input-control[data-type="captcha"]').hide();
+						},
+						onremove: function() {
+							$('li.input-control[data-type="captcha"]').show();
+						}
+					}
+				}
 			});
 
 			// don't submit form when user hits Enter in paragraph input
