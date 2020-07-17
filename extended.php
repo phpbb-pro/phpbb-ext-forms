@@ -34,7 +34,7 @@ class extended
     public function process_acp_add($row, $errors, $form_id)
     {
       $row['form_permalink'] = $this->request->variable('form_permalink', '', true);
-      $row['allowed_groups'] = $this->request->variable('allowed_groups', [0]);
+      $row['allowed_groups'] = implode(',', $this->request->variable('allowed_groups', [0]));
 
       if (utf8_strlen($row['form_permalink']) > 255)
       {
@@ -62,7 +62,7 @@ class extended
     {
       return [
         'form_permalink'	=> $row['form_permalink'],
-        'allowed_groups'	=> implode(',', $row['allowed_groups']),
+        'allowed_groups'	=> $row['allowed_groups'],
       ];
     }
 

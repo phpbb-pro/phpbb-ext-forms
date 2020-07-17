@@ -21,7 +21,7 @@ class main_info
 			'modes'		=> array(
 				'manage'	=> array(
 					'title'	=> 'ACP_FORMS_MANAGE',
-					'auth'	=> 'ext_senky/forms && acl_a_board',
+					'auth'	=> 'ext_senky/forms && acl_a_forms',
 					'cat'	=> array('ACP_FORMS_TITLE')
 				),
 			),

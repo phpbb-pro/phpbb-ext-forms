@@ -18,6 +18,7 @@ class acp_listener implements EventSubscriberInterface
 	static public function getSubscribedEvents()
 	{
 		return array(
+			'core.permissions'										=> 'permissions',
 			'core.acp_manage_forums_display_form'	=> 'display_form_information',
 		);
 	}
@@ -34,6 +35,13 @@ class acp_listener implements EventSubscriberInterface
 		$this->forms_table = $forms_table;
 		$this->admin_path = $phpbb_admin_path;
 		$this->php_ext = $php_ext;
+	}
+
+	public function permissions($event)
+	{
+		$permissions = $event['permissions'];
+		$permissions['a_forms'] = array('lang' => 'ACL_A_FORMS', 'cat' => 'misc');
+		$event['permissions'] = $permissions;
 	}
 
 	/**
