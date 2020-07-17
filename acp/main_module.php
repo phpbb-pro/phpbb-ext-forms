@@ -308,7 +308,11 @@ class main_module
 				}
 				$this->db->sql_freeresult($result);
 
-				$this->template->assign_var('U_ADD_FORM', $this->u_action . '&action=add');
+				$this->template->assign_vars([
+					'U_ADD_FORM'	=> $this->u_action . '&action=add',
+					'S_IS_DEMO'		=> $this->request->server('HTTP_HOST') == 'demo.phpbb.pro',
+					'S_IS_EXTENDED'	=> !empty($this->extended),
+				]);
 
 				$this->tpl_name = 'forms_list';
 
