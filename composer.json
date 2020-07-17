@@ -1,14 +1,14 @@
 {
     "name": "senky/forms",
     "type": "phpbb-extension",
-    "description": "This extension allows you to create structured forms which can replace topic creation form in defined forums.",
-    "keywords": ["forms", "topic template", "template", "form", "structure"],
+    "description": "This extension allows you to create structured forms which can replace topic creation page in defined forums.",
+    "keywords": ["forms", "topic template", "template", "form", "structure", "creator", "generator", "maker"],
     "version": "1.0.0",
     "license": "Proprietary",
     "authors": [
         {
             "name": "Jakub Senko",
-            "email": "jakubsenko@gmail.com"
+            "email": "senky@phpbb.pro"
         }
     ],
     "require": {
