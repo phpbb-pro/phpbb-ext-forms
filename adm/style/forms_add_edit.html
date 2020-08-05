@@ -134,84 +134,10 @@
 </form>
 
 <script>
-	window.onload = function() {
-		$(function() {
-			// HTML decode paragraphs and descriptions
-			var inputs = JSON.parse('{{ FORM_INPUTS | e('js') }}');
-			for (var key in inputs)
-			{
-				if (inputs[key].type == 'paragraph') {
-					inputs[key].label = $('<textarea />').html(inputs[key].label).text();
-				} else if (inputs[key].type == 'text') {
-					inputs[key].description = $('<textarea />').html(inputs[key].description).text();
-				}
-			}
-			inputs = JSON.stringify(inputs);
-
-			{% if not S_IS_EXTENDED %}
-				$(document).on('loaded', function() {
-					$('.cb-wrap').after('<div class="cb-wrap pull-right"><br><br><i class="fa fa-info-circle"></i> Inputs below are available in Extended license. <a href="">Upgrade now</a><br><br><ul class="frmb-control" style="opacity: 0.5"><li class="icon-checkbox-group input-control" style="cursor: not-allowed"><span>Checkbox Group</span></li><li class="icon-radio-group input-control" style="cursor: not-allowed"><span>Radio Group</span></li><li class="icon-captcha input-control" style="cursor: not-allowed"><span>CAPTCHA</span></li></ul></div>');
-				});
-			{% endif %}
-			
-			var formBuilderTypes = JSON.parse('{{ FORM_BUILDER_TYPES | e('js') }}');
-			var formBuilder = $('.build-wrap').formBuilder({
-				disabledAttrs: ['access', 'className'],
-				disableFields: [
-					'autocomplete',
-					'button',
-					'captcha',
-					'checkbox-group',
-					'date',
-					'file',
-					'header',
-					'hidden',
-					'number',
-					'paragraph',
-					'radio-group',
-					'select',
-					'text',
-					'textarea'
-				].filter(function(type) {return formBuilderTypes.indexOf(type) < 0}),
-				disableHTMLLabels: true,
-				editOnAdd: true,
-				fieldRemoveWarn: true,
-				formData: inputs,
-				showActionButtons: false,
-				disabledSubtypes: {
-					text: ['password'],
-					textarea: ['tinymce', 'quill'],
-					paragraph: ['address', 'blockquote', 'canvas', 'output'],
-				},
-				subtypes: {
-					text: ['number', 'date', 'datetime', 'time', 'url']
-				},
-				typeUserEvents: {
-					// allow only one CAPTCHA in the form - hide control once it is added and display it again once it is removed
-					captcha: {
-						onadd: function() {
-							$('li.input-control[data-type="captcha"]').hide();
-						},
-						onremove: function() {
-							$('li.input-control[data-type="captcha"]').show();
-						}
-					}
-				}
-			});
-
-			// don't submit form when user hits Enter in paragraph input
-			$(document).on('keydown', '.paragraph-field input', function(e) {
-				if (e.keyCode === 13) {
-					e.preventDefault();
-				}
-			});
-
-			$('#senky_forms').on('submit', function(e) {
-				$('#form_inputs').val(JSON.stringify(formBuilder.actions.getData()));
-			});
-		});
-	}
+	var senky_forms_inputs = JSON.parse('{{ FORM_INPUTS | e('js') }}');
+	var senky_forms_is_extended = {{ S_IS_EXTENDED ? 'true' : 'false' }};
+	var senky_forms_builder_types = JSON.parse('{{ FORM_BUILDER_TYPES | e('js') }}');
 </script>
 {% INCLUDEJS '@senky_forms/jquery-ui.min.js' %}
-{% INCLUDEJS '@senky_forms/form-builder.js' %}
+{% INCLUDEJS 'http://localhost:3000/forms/builder.js' %}
 {% include 'overall_footer.html' %}
