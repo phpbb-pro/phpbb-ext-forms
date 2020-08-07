@@ -1,0 +1,6 @@
+<dl class="senky-forms-{{ input.name }}">
+  <dt><label>{{ input.label | unescape }}{% if input.required %} *{% endif %}</label>{% if input.description %}<br /><span>{{ input.description | unescape }}</span>{% endif %}</dt>
+  <dd>
+    {% block body %}{% endblock %}
+  </dd>
+</dl>

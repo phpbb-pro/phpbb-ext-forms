@@ -1,0 +1,13 @@
+{% extends 'types/input_base.html' %}
+
+{% block body %}
+  {% for option in input.values %}
+    <label for="{{ input.name }}-{{ loop.index }}">
+      <input type="radio" name="{{ input.name }}" id="{{ input.name }}-{{ loop.index }}" value="{{ option.value }}"{% if option.selected %} checked{% endif %} />
+      {{ option.label }}
+      {% if input.inline is empty %}
+        <br />
+      {% endif %}
+    </label>
+  {% endfor %}
+{% endblock %}

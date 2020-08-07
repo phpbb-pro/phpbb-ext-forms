@@ -1,0 +1,5 @@
+{% extends 'types/input_base.html' %}
+
+{% block body %}
+  <input type="{% if input.subtype %}{{ input.subtype }}{% else %}text{% endif %}" placeholder="{{ input.placeholder }}" name="{{ input.name }}" value="{{ input.value }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox autowidth" />
+{% endblock %}

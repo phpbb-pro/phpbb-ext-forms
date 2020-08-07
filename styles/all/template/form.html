@@ -23,54 +23,7 @@
 			{% endif %}
 			<fieldset class="fields2">
 				{% for input in FORM_INPUTS %}
-					{% if input.type == 'paragraph' %}
-						<p>{{ input.label | unescape }}</p>
-					<!-- standard-remove -->
-					{% elseif input.type == 'captcha' %}
-						{% if CAPTCHA_TEMPLATE %}
-							{% include CAPTCHA_TEMPLATE %}
-						{% endif %}
-					<!-- /standard-remove -->
-					{% else %}
-						<dl class="senky-forms-{{ input.name }}">
-							<dt><label>{{ input.label | unescape }}{% if input.required %} *{% endif %}</label>{% if input.description %}<br /><span>{{ input.description | unescape }}</span>{% endif %}</dt>
-							<dd>
-								{% if input.type == 'text' %}
-									<input type="{% if input.subtype %}{{ input.subtype }}{% else %}text{% endif %}" placeholder="{{ input.placeholder }}" name="{{ input.name }}" value="{{ input.value }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox autowidth" />
-								{% elseif input.type == 'select' %}
-									<select name="{{ input.name }}{% if input.multiple %}[]{% endif %}" class="autowidth"{% if input.required %} required{% endif %}{% if input.multiple %} multiple{% endif %}>
-										{% for option in input.values %}
-											<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
-										{% endfor %}
-									</select>
-								<!-- standard-remove -->
-								{% elseif input.type == 'checkbox-group' %}
-									{% for option in input.values %}
-										<label for="{{ input.name }}-{{ loop.index }}">
-											<input type="checkbox" name="{{ input.name }}[]" id="{{ input.name }}-{{ loop.index }}" value="{{ option.value }}"{% if option.selected %} checked{% endif %} />
-											{{ option.label }}
-											{% if input.inline is empty %}
-												<br />
-											{% endif %}
-										</label>
-									{% endfor %}
-								{% elseif input.type == 'radio-group' %}
-									{% for option in input.values %}
-										<label for="{{ input.name }}-{{ loop.index }}">
-											<input type="radio" name="{{ input.name }}" id="{{ input.name }}-{{ loop.index }}" value="{{ option.value }}"{% if option.selected %} checked{% endif %} />
-											{{ option.label }}
-											{% if input.inline is empty %}
-												<br />
-											{% endif %}
-										</label>
-									{% endfor %}
-								<!-- /standard-remove -->
-								{% else %}
-									<textarea name="{{ input.name }}" placeholder="{{ input.placeholder }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.rows %} rows="{{ input.rows }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox">{{ input.value }}</textarea>
-								{% endif %}
-							</dd>
-						</dl>
-					{% endif %}
+					{% include 'types/' ~ input.type ~ '.html' %}
 				{% endfor %}
 			</fieldset>
 		</div>

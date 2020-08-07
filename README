@@ -4,4 +4,7 @@ config/controls_extended.yml
 controls/type/captcha.php
 controls/type/checkbox.php
 controls/type/radio.php
+styles/all/template/types/captcha.html
+styles/all/template/types/checkbox-group.html
+styles/all/template/types/radio-group.html
 extended.php

@@ -1,0 +1,9 @@
+{% extends 'types/input_base.html' %}
+
+{% block body %}
+  <select name="{{ input.name }}{% if input.multiple %}[]{% endif %}" class="autowidth"{% if input.required %} required{% endif %}{% if input.multiple %} multiple{% endif %}>
+    {% for option in input.values %}
+      <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+    {% endfor %}
+  </select>
+{% endblock %}

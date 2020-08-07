@@ -1,0 +1,5 @@
+{% extends 'types/input_base.html' %}
+
+{% block body %}
+  <textarea name="{{ input.name }}" placeholder="{{ input.placeholder }}"{% if input.maxlength %} maxlength="{{ input.maxlength }}"{% endif %}{% if input.rows %} rows="{{ input.rows }}"{% endif %}{% if input.required %} required{% endif %} class="inputbox">{{ input.value }}</textarea>
+{% endblock %}
