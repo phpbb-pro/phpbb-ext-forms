@@ -61,13 +61,12 @@ class main_module
 		add_form_key('senky/forms');
 
 		$action = $this->request->variable('action', '');
+		$form_id = $this->request->variable('id', 0);
 
 		switch ($action)
 		{
 			case 'edit':
 			case 'clone':
-
-				$form_id = $this->request->variable('id', 0);
 
 				$sql = 'SELECT *
 					FROM ' . $this->forms_table . '
